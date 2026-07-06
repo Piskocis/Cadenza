@@ -73,6 +73,22 @@ A **SoundFont** is required for sound — drop a GM `.sf2` into `resources/sf2/`
 (e.g. the freely-redistributable *GeneralUser GS*). Cadenza loads the one you
 select, or the largest it finds there.
 
+## Build (macOS / Linux core)
+
+The portable arranger core, command-line tools, and unit tests can be built
+without JUCE or FluidSynth. This is the fastest way to validate macOS/Linux
+compiler and test coverage while the native GUI host remains Windows-first.
+
+```sh
+cmake -S . -B build-core -DCMAKE_BUILD_TYPE=Debug -DCADENZA_BUILD_TESTS=ON
+cmake --build build-core --parallel
+ctest --test-dir build-core --output-on-failure
+```
+
+When `lib/JUCE` is not present, CMake skips the native GUI app target and still
+builds the portable core/tests/tools. When FluidSynth is not installed, the
+audio path uses the `NullSynthEngine` fallback.
+
 ---
 
 ## Contributing

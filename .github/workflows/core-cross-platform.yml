@@ -1,0 +1,29 @@
+name: Core cross-platform build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  core:
+    name: Core tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure portable core
+        run: cmake -S . -B build-core -DCMAKE_BUILD_TYPE=Debug -DCADENZA_BUILD_TESTS=ON
+
+      - name: Build portable core
+        run: cmake --build build-core --parallel
+
+      - name: Test portable core
+        run: ctest --test-dir build-core --output-on-failure
