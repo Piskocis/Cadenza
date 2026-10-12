@@ -148,6 +148,7 @@ public:
         std::function<void(bool)> setSyncroStop;
         std::function<void(bool)> setAutoFill;
         std::function<void(bool)> setFingeredOnBass;
+        std::function<void(int)> onPageChanged;             // nav page index 0..7
         std::function<void(const std::string&)> selectSection;
         std::function<void(int, int, bool)> onKeyboardNote;  // note, velocity, isOn
         std::function<void(int, int)> onMixerVolume;          // channel, volume 0..127
@@ -227,6 +228,7 @@ public:
     void setBpm(int bpm);
     void setPlaying(bool playing);
     void setActivePage(int page);
+    int activePage() const noexcept { return m_navActive; }
     void setChordAnalysisSummary(const juce::String& text);
 
     // Mixer: rebuild strips for (channel, label) pairs, then sync a strip's state.
@@ -264,6 +266,7 @@ public:
     void setRecorderPart(int partIndex);
 
     // Style Editor page (page index 7). Drive the embedded piano-roll editor.
+    static constexpr int kStylePage = 2;
     static constexpr int kEditorPage = 7;
     void editorSetPart(const std::vector<cadenza::arranger::PatternNote>& notes,
                        int sectionTicks, int ticksPerBeat, int beatsPerBar, int beatUnit,

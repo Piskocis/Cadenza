@@ -60,7 +60,6 @@ public:
             fluid_settings_setnum(m_settings, "synth.gain", 0.5);   // headroom; master limiter catches peaks
             fluid_settings_setint(m_settings, "synth.audio-channels", 1);
             fluid_settings_setint(m_settings, "synth.lock-memory", 0);
-            fluid_settings_setint(m_settings, "synth.drums-channel.active", 1);
 
             // Yamaha styles (and the Timbres of Heaven XGM SoundFont) are XG-based.
             // FluidSynth defaults to GS bank-select, under which the styles' XG
@@ -95,11 +94,10 @@ public:
                 // less "digital"/aliased tone than the 4th-order default.
                 fluid_synth_set_interp_method(m_synth, -1, FLUID_INTERP_HIGHEST);
 
-                // RHY2 (synth ch 8) must be a DRUM-type channel like ch 9.
-                // synth.drums-channel.active only covers channel 9; on a melodic
-                // channel the bank-128 kit select fails and FluidSynth silently
-                // falls back to a bank-0 melodic voice — sub-rhythm hits played
-                // an English Horn instead of a kit.
+                // RHY1 (synth ch 9) and RHY2 (synth ch 8) must be DRUM-type
+                // channels. On a melodic channel the bank-128 kit select fails
+                // and FluidSynth silently falls back to a bank-0 melodic voice —
+                // sub-rhythm hits played an English Horn instead of a kit.
                 forceDrumChannelTypes();
             }
             juce::Logger::writeToLog("[Cadenza] FluidSynth drum channels active: synth channels 9 (RHY1) + 8 (RHY2); reverb+chorus on; interp=highest; poly=512");
@@ -168,6 +166,12 @@ public:
             return;
         }
 
+        // Non-rhythm channels must be explicitly restored to melodic mode. In
+        // XG bank-select mode a previous CC0 can turn a channel into a drum
+        // channel, and a later program change alone does not turn it back. This
+        // is especially visible when manual Right voices reuse a style channel.
+        fluid_synth_set_channel_type(m_synth, channel, CHANNEL_TYPE_MELODIC);
+
         // Melodic: select the requested voice (bank set by prior CC0/CC32).
         fluid_synth_program_change(m_synth, channel, program);
 
@@ -231,8 +235,7 @@ public:
     bool supportsSoundFonts() const noexcept override { return true; }
 
 private:
-    // GM percussion channel (0-based). FluidSynth synth.drums-channel.active makes
-    // synth channel 9 the drum channel; voice fallback must not move it off the
+    // GM percussion channel (0-based). Voice fallback must not move it off the
     // percussion bank.
     static constexpr int kDrumChannel = 9;
     // Second drum channel for Yamaha RHY2 (sub-rhythm), mapped from cadenza ch 9.
@@ -250,9 +253,8 @@ private:
     }
 
     void forceDrumChannelTypes() {
-        // RHY1 (synth ch 9) is normally covered by synth.drums-channel.active,
-        // but FluidSynth resets can rebuild channel state. RHY2 (synth ch 8)
-        // is never automatic, so assert both through the same path.
+        // FluidSynth resets can rebuild channel state, so assert both channels
+        // through the same explicit API path.
         forceDrumChannelType(kDrumChannel);
         forceDrumChannelType(kDrumChannel2);
     }

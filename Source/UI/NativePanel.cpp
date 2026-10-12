@@ -315,6 +315,7 @@ NativePanel::NativePanel()
                 m_navButtons[k]->setToggleState(static_cast<int>(k) == i, juce::dontSendNotification);
             resized();   // re-layout for the selected page
             repaint();
+            if (m_cb.onPageChanged) m_cb.onPageChanged(i);
         };
         addAndMakeVisible(*b);
         m_navButtons.push_back(std::move(b));
@@ -980,6 +981,7 @@ void NativePanel::setActivePage(int page)
         m_navButtons[k]->setToggleState(static_cast<int>(k) == m_navActive, juce::dontSendNotification);
     resized();
     repaint();
+    if (m_cb.onPageChanged) m_cb.onPageChanged(m_navActive);
 }
 
 void NativePanel::setChordAnalysisSummary(const juce::String& text)
