@@ -8,9 +8,10 @@ genos-scan.csv
 graphify-out/
 dist/
 
-# Large SoundFonts are distributed via the package script, not git
-# (GeneralUser GS is small enough to stay tracked).
-resources/sf2/Timbres Of Heaven*.sf2
+# Large SoundFonts are distributed separately, not through git
+# (GeneralUser GS is small enough to stay tracked). Ignore both the sound bank
+# and the companion files shipped by the Timbres of Heaven package.
+resources/sf2/Timbres [Oo]f Heaven*
 
 # Yamaha style files are copyrighted user-supplied content — never commit them.
 *.STY

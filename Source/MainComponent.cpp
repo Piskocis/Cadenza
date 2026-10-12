@@ -2540,8 +2540,15 @@ bool MainComponent::loadAndApplyStyleFile(const juce::File& file)
     // live-melody channel/program so it never collides with this style's channels.
     updateNativePanelStyle();
     if (editableCadenzaStyle) {
-        m_midi.setCaptureMode(true);
-        m_audio.setMetronomeEnabled(m_metronomeOn);
+        // Loading a native .cstyle makes it editable, but must not turn the
+        // performance keyboard into the recorder's target part while the user
+        // is on Home/Sound/etc. Capture belongs only to the Style and Editor
+        // pages; the page callback below keeps it in sync afterwards.
+        const int page = m_panel ? m_panel->activePage() : 0;
+        const bool recorderPage = page == cadenza::ui::NativePanel::kStylePage
+            || page == cadenza::ui::NativePanel::kEditorPage;
+        m_midi.setCaptureMode(recorderPage);
+        m_audio.setMetronomeEnabled(recorderPage && m_metronomeOn);
         recorderPrepareTargetChannel();
         if (m_panel) {
             const auto cfg = m_recorder.config();
@@ -3903,6 +3910,10 @@ void MainComponent::applyRightHand()
                                          + " VST load failed: " + juce::String(err));
         } else {
             m_audio.clearPartInstrument(channel);            // back to the GM SoundFont
+            // Right voices are GM programs, so reset any XG/style bank state
+            // inherited by a reused channel before selecting their instrument.
+            m_audio.controlChange(channel, 0, 0);             // bank MSB 0 (GM)
+            m_audio.controlChange(channel, 32, 0);            // bank LSB 0
             m_audio.programChange(channel, layer.program);   // GM voice
         }
         m_audio.controlChange(channel, 7 /*CC7 volume/gain*/, layer.volume);
@@ -3985,6 +3996,16 @@ void MainComponent::buildNativePanel()
     };
     cb.onKeyboardNote = [this](int note, int velocity, bool isOn) {
         m_midi.injectNote(note, velocity, isOn);   // full path: chord detect + live melody
+    };
+    cb.onPageChanged = [this](int page) {
+        // An editable .cstyle keeps a recorder session available in the
+        // background. Only its Style/Editor workspaces should redirect the
+        // whole keyboard to the selected recorder part.
+        const bool recorderPage = page == cadenza::ui::NativePanel::kStylePage
+            || page == cadenza::ui::NativePanel::kEditorPage;
+        const bool recorderActive = m_recorder.sessionActive() && recorderPage;
+        m_midi.setCaptureMode(recorderActive);
+        m_audio.setMetronomeEnabled(recorderActive && m_metronomeOn);
     };
     cb.onMixerVolume = [this](int channel, int volume) {
         m_mixer.setVolume(channel, volume);
@@ -4151,7 +4172,11 @@ void MainComponent::buildNativePanel()
     cb.onRecPart  = [this](int idx)  { recorderSetPart(idx); };
     cb.onRecMetronome = [this](bool on) {
         m_metronomeOn = on;
-        if (m_recorder.sessionActive()) m_audio.setMetronomeEnabled(on);
+        if (!m_recorder.sessionActive()) return;
+        const int page = m_panel ? m_panel->activePage() : 0;
+        const bool recorderPage = page == cadenza::ui::NativePanel::kStylePage
+            || page == cadenza::ui::NativePanel::kEditorPage;
+        m_audio.setMetronomeEnabled(on && recorderPage);
     };
     cb.onRecArm   = [this](bool on)  { recorderArm(on); };
     cb.onRecEdit  = [this] {

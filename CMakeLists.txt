@@ -253,6 +253,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/JUCE/CMakeLists.txt")
     juce_add_gui_app(Cadenza
         PRODUCT_NAME "Cadenza Workstation"
         COMPANY_NAME "Cadenza"
+        NEEDS_CURL TRUE
     )
 
     target_sources(Cadenza
@@ -333,7 +334,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/JUCE/CMakeLists.txt")
     )
 
     if(CADENZA_BUILD_TESTS)
-        add_executable(cadenza_pattern_import_tests
+        juce_add_console_app(cadenza_pattern_import_tests
+            PRODUCT_NAME "cadenza_pattern_import_tests"
+            NEEDS_CURL FALSE
+        )
+        target_sources(cadenza_pattern_import_tests PRIVATE
             tests/StylePartPatternImportTests.cpp
             Source/UI/StylePartPatternImport.cpp
         )
@@ -345,7 +350,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/JUCE/CMakeLists.txt")
         add_test(NAME cadenza_pattern_import_tests
                  COMMAND cadenza_pattern_import_tests)
 
-        add_executable(cadenza_midi_style_converter_tests
+        juce_add_console_app(cadenza_midi_style_converter_tests
+            PRODUCT_NAME "cadenza_midi_style_converter_tests"
+            NEEDS_CURL FALSE
+        )
+        target_sources(cadenza_midi_style_converter_tests PRIVATE
             tests/MidiStyleConverterTests.cpp
             Source/Arranger/MidiStyleConverter.cpp
         )
@@ -357,7 +366,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/JUCE/CMakeLists.txt")
         add_test(NAME cadenza_midi_style_converter_tests
                  COMMAND cadenza_midi_style_converter_tests)
 
-        add_executable(cadenza_ai_style_validation_tests
+        juce_add_console_app(cadenza_ai_style_validation_tests
+            PRODUCT_NAME "cadenza_ai_style_validation_tests"
+            NEEDS_CURL TRUE
+        )
+        target_sources(cadenza_ai_style_validation_tests PRIVATE
             tests/AiStyleValidationTests.cpp
             Source/Ai/StyleGenerator.cpp
         )
